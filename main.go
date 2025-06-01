@@ -7,12 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/navidabedi92/NLockBox.git/encryption"
 	"github.com/navidabedi92/NLockBox.git/file"
 )
 
 func main() {
-	secret := []byte("myverystrongpasswordo32bitlength")
+	godotenv.Load() // 👈 load .env file
+
 	var secretFilePath string
 	if len(os.Args) < 2 {
 		log.Fatal("Incorrect Command. Usage: add|del|list [flags]")
@@ -43,17 +45,21 @@ func main() {
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
-		encrypted, _ := encryption.Encrypt(secret, []byte(*addPassword))
+		// secrets := file.ReadFile(secretFilePath)
+
+		encrypted, _ := encryption.Encrypt([]byte(*addPassword))
+
 		file.Write(secretFilePath, *addUsername+"		"+string(encrypted))
 	case "edit":
 		editCmd.Parse(os.Args[2:])
-		encrypted, _ := encryption.Encrypt(secret, []byte(*addPassword))
+		encrypted, _ := encryption.Encrypt([]byte(*addPassword))
 		file.Write(secretFilePath, *addUsername+"		"+string(encrypted))
 	case "del":
 		delCmd.Parse(os.Args[2:])
 		fmt.Println(*delUsername)
 	case "list":
-		fmt.Println("list")
+		secrets := file.ReadFile(secretFilePath)
+		fmt.Print(secrets)
 	default:
 		os.Exit(1)
 

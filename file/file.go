@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/navidabedi92/NLockBox.git/encryption"
 )
 
 type Secret struct {
@@ -28,6 +30,7 @@ func Write(path string, text string) {
 }
 
 func ReadFile(path string) []Secret {
+
 	var secrets []Secret
 
 	data, _ := os.ReadFile(path)
@@ -35,7 +38,8 @@ func ReadFile(path string) []Secret {
 	for _, line := range lines {
 		if line != "" {
 			up := strings.Split(line, "		")
-			secrets = append(secrets, Secret{Username: up[0], Password: up[1]})
+			decrypted, _ := encryption.Decrypt([]byte(up[1]))
+			secrets = append(secrets, Secret{Username: up[0], Password: string(decrypted)})
 		}
 	}
 

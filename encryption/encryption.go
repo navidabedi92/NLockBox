@@ -6,9 +6,12 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"os"
 )
 
-func Encrypt(secret []byte, plaintext []byte) ([]byte, error) {
+func Encrypt(plaintext []byte) ([]byte, error) {
+	secret := []byte(os.Getenv("SECRET_KEY"))
+
 	block, err := aes.NewCipher(secret)
 	if err != nil {
 		return nil, err
@@ -26,7 +29,8 @@ func Encrypt(secret []byte, plaintext []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-func Decrypt(secret []byte, ciphertext []byte) ([]byte, error) {
+func Decrypt(ciphertext []byte) ([]byte, error) {
+	secret := []byte(os.Getenv("SECRET_KEY"))
 	block, err := aes.NewCipher(secret)
 	if err != nil {
 		return nil, err
