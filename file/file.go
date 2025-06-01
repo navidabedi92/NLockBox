@@ -3,8 +3,10 @@ package file
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"github.com/navidabedi92/NLockBox.git/encryption"
 )
 
@@ -13,8 +15,31 @@ type Secret struct {
 	Password string
 }
 
-func Write(path string, text string) {
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+var secretFilePath string
+var localAppData string
+
+func Init() {
+	godotenv.Load() // 👈 load .env file
+
+	localAppData = filepath.Join(os.Getenv("LOCALAPPDATA"), "NLockBox")
+	secretFilePath = filepath.Join(localAppData, "secrets.txt")
+
+	CreateFolders()
+}
+
+func CreateFolders() string {
+
+	_, err := os.Stat(localAppData)
+	if err != nil {
+		os.Mkdir(localAppData, 0700)
+		os.Create(secretFilePath)
+	}
+
+	return secretFilePath
+}
+
+func Write(text string) {
+	file, err := os.OpenFile(secretFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -29,11 +54,11 @@ func Write(path string, text string) {
 	}
 }
 
-func ReadFile(path string) []Secret {
+func ReadFile() []Secret {
 
 	var secrets []Secret
 
-	data, _ := os.ReadFile(path)
+	data, _ := os.ReadFile(secretFilePath)
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
 		if line != "" {
@@ -45,4 +70,9 @@ func ReadFile(path string) []Secret {
 
 	return secrets
 
+}
+
+func RenewFolders() {
+	os.RemoveAll(localAppData)
+	CreateFolders()
 }

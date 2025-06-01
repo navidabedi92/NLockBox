@@ -5,33 +5,24 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
-	"github.com/joho/godotenv"
 	"github.com/navidabedi92/NLockBox.git/encryption"
 	"github.com/navidabedi92/NLockBox.git/file"
+	"github.com/samber/lo"
 )
 
 func main() {
-	godotenv.Load() // 👈 load .env file
 
-	var secretFilePath string
 	if len(os.Args) < 2 {
 		log.Fatal("Incorrect Command. Usage: add|del|list [flags]")
 		os.Exit(1)
 	}
-
-	localAppData := filepath.Join(os.Getenv("LOCALAPPDATA"), "NLockBox")
-	secretFilePath = filepath.Join(localAppData, "secrets.txt")
-	_, err := os.Stat(localAppData)
-	if err != nil {
-		os.Mkdir(localAppData, 0700)
-		os.Create(secretFilePath)
-	}
+	file.Init()
 
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	editCmd := flag.NewFlagSet("edit", flag.ExitOnError)
 	delCmd := flag.NewFlagSet("del", flag.ExitOnError)
+	_ = flag.NewFlagSet("renew", flag.ExitOnError)
 	_ = flag.NewFlagSet("list", flag.ExitOnError)
 
 	addUsername := addCmd.String("username", "", "username of the secret")
@@ -45,21 +36,29 @@ func main() {
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
-		// secrets := file.ReadFile(secretFilePath)
 
-		encrypted, _ := encryption.Encrypt([]byte(*addPassword))
+		secrets := file.ReadFile()
 
-		file.Write(secretFilePath, *addUsername+"		"+string(encrypted))
+		_, exist := lo.Find(secrets, func(secret file.Secret) bool {
+			return secret.Username == *addUsername
+		})
+		if !exist {
+			encrypted, _ := encryption.Encrypt([]byte(*addPassword))
+			file.Write(*addUsername + "		" + string(encrypted))
+		}
 	case "edit":
 		editCmd.Parse(os.Args[2:])
 		encrypted, _ := encryption.Encrypt([]byte(*addPassword))
-		file.Write(secretFilePath, *addUsername+"		"+string(encrypted))
+		file.Write(*addUsername + "		" + string(encrypted))
 	case "del":
 		delCmd.Parse(os.Args[2:])
 		fmt.Println(*delUsername)
 	case "list":
-		secrets := file.ReadFile(secretFilePath)
+		secrets := file.ReadFile()
 		fmt.Print(secrets)
+	case "renew":
+		file.RenewFolders()
+
 	default:
 		os.Exit(1)
 
