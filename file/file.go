@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/navidabedi92/NLockBox.git/encryption"
 )
 
 type Secret struct {
@@ -38,19 +37,29 @@ func CreateFolders() string {
 	return secretFilePath
 }
 
-func Write(text string) {
-	file, err := os.OpenFile(secretFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+func Write(secrets []Secret) {
+	file, err := os.OpenFile(secretFilePath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
 	}
 	defer file.Close()
 
-	// Write to the file
-	if _, err := file.WriteString(text + "\n"); err != nil {
+	var data string
+
+	for index, secret := range secrets {
+		secretTxt := secret.Username + "	" + secret.Password
+		if index == 0 {
+			data = secretTxt
+		} else {
+			data += "\n" + secretTxt
+		}
+	}
+
+	if _, err := file.WriteString(data); err != nil {
 		fmt.Println("Error writing to file:", err)
 	} else {
-		fmt.Println("Successfully appended to file.")
+		fmt.Println("Success")
 	}
 }
 
@@ -62,9 +71,8 @@ func ReadFile() []Secret {
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
 		if line != "" {
-			up := strings.Split(line, "		")
-			decrypted, _ := encryption.Decrypt([]byte(up[1]))
-			secrets = append(secrets, Secret{Username: up[0], Password: string(decrypted)})
+			up := strings.Split(line, "	")
+			secrets = append(secrets, Secret{Username: up[0], Password: up[1]})
 		}
 	}
 

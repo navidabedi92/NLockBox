@@ -28,34 +28,52 @@ func main() {
 	addUsername := addCmd.String("username", "", "username of the secret")
 	addPassword := addCmd.String("password", "", "password of the secret")
 
-	// editUsername := editCmd.String("username", "", "username of the secret")
-	// editPassword := editCmd.String("password", "", "password of the secret")
+	editUsername := editCmd.String("username", "", "username of the secret")
+	editPassword := editCmd.String("password", "", "password of the secret")
 
 	delUsername := delCmd.String("username", "", "username of the secret")
-
+	secrets := file.ReadFile()
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
-
-		secrets := file.ReadFile()
-
 		_, exist := lo.Find(secrets, func(secret file.Secret) bool {
 			return secret.Username == *addUsername
 		})
 		if !exist {
 			encrypted, _ := encryption.Encrypt([]byte(*addPassword))
-			file.Write(*addUsername + "		" + string(encrypted))
+			newSecret := file.Secret{Username: *addUsername, Password: string(encrypted)}
+			secrets = append(secrets, newSecret)
+			file.Write(secrets)
+		} else {
+			log.Fatal("Username Is Not Unique")
 		}
 	case "edit":
 		editCmd.Parse(os.Args[2:])
-		encrypted, _ := encryption.Encrypt([]byte(*addPassword))
-		file.Write(*addUsername + "		" + string(encrypted))
+		newUsername := *editUsername
+		secret, exist := lo.Find(secrets, func(secret file.Secret) bool {
+			return secret.Username == newUsername
+		})
+		if exist {
+			secrets = lo.Reject(secrets, func(x file.Secret, index int) bool {
+				return x == secret
+			})
+			encrypted, _ := encryption.Encrypt([]byte(*editPassword))
+			newSecret := file.Secret{Username: newUsername, Password: string(encrypted)}
+			secrets = append(secrets, newSecret)
+			file.Write(secrets)
+		} else {
+			log.Fatal("Username Is Not In The List")
+		}
 	case "del":
 		delCmd.Parse(os.Args[2:])
 		fmt.Println(*delUsername)
 	case "list":
 		secrets := file.ReadFile()
-		fmt.Print(secrets)
+		for index, secret := range secrets {
+			decryptedArray, _ := encryption.Decrypt([]byte(secret.Password))
+			decrypted := string(decryptedArray)
+			fmt.Printf("%d) Username: %s	Password: %s\n", index+1, secret.Username, decrypted)
+		}
 	case "renew":
 		file.RenewFolders()
 
