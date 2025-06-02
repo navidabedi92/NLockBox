@@ -66,7 +66,10 @@ func main() {
 		}
 	case "del":
 		delCmd.Parse(os.Args[2:])
-		fmt.Println(*delUsername)
+		secrets = lo.Reject(secrets, func(x file.Secret, index int) bool {
+			return x.Username == *delUsername
+		})
+		file.Write(secrets)
 	case "list":
 		secrets := file.ReadFile()
 		for index, secret := range secrets {
