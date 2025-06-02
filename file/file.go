@@ -38,28 +38,28 @@ func CreateFolders() string {
 }
 
 func Write(secrets []Secret) {
-	file, err := os.OpenFile(secretFilePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := os.Create(secretFilePath)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		fmt.Println("Error creating file:", err)
 		return
 	}
-	defer file.Close()
-
-	var data string
-
-	for index, secret := range secrets {
-		secretTxt := secret.Username + "	" + secret.Password
-		if index == 0 {
-			data = secretTxt
-		} else {
-			data += "\n" + secretTxt
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Println("Error closing file:", err)
 		}
+	}()
+
+	// Use strings.Builder for efficient concatenation
+	var sb strings.Builder
+	for _, secret := range secrets {
+		sb.WriteString(secret.Username + "\t" + secret.Password + "\n")
 	}
 
-	if _, err := file.WriteString(data); err != nil {
+	// Write to file
+	if _, err := file.WriteString(sb.String()); err != nil {
 		fmt.Println("Error writing to file:", err)
 	} else {
-		fmt.Println("Success")
+		fmt.Println("Success: Secrets saved")
 	}
 }
 

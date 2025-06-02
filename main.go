@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
@@ -41,7 +42,8 @@ func main() {
 		})
 		if !exist {
 			encrypted, _ := encryption.Encrypt([]byte(*addPassword))
-			newSecret := file.Secret{Username: *addUsername, Password: string(encrypted)}
+			encodedPassword := base64.StdEncoding.EncodeToString(encrypted)
+			newSecret := file.Secret{Username: *addUsername, Password: encodedPassword}
 			secrets = append(secrets, newSecret)
 			file.Write(secrets)
 		} else {
@@ -58,7 +60,8 @@ func main() {
 				return x == secret
 			})
 			encrypted, _ := encryption.Encrypt([]byte(*editPassword))
-			newSecret := file.Secret{Username: newUsername, Password: string(encrypted)}
+			encodedPassword := base64.StdEncoding.EncodeToString(encrypted)
+			newSecret := file.Secret{Username: newUsername, Password: encodedPassword}
 			secrets = append(secrets, newSecret)
 			file.Write(secrets)
 		} else {
@@ -73,7 +76,8 @@ func main() {
 	case "list":
 		secrets := file.ReadFile()
 		for index, secret := range secrets {
-			decryptedArray, _ := encryption.Decrypt([]byte(secret.Password))
+			decodedBytes, _ := base64.StdEncoding.DecodeString(secret.Password)
+			decryptedArray, _ := encryption.Decrypt(decodedBytes)
 			decrypted := string(decryptedArray)
 			fmt.Printf("%d) Username: %s	Password: %s\n", index+1, secret.Username, decrypted)
 		}
