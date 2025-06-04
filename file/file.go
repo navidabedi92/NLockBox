@@ -1,12 +1,15 @@
 package file
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/navidabedi92/NLockBox.git/encryption"
 )
 
 type Secret struct {
@@ -37,8 +40,14 @@ func CreateFolders() string {
 	return secretFilePath
 }
 
-func Write(secrets []Secret) {
-	file, err := os.Create(secretFilePath)
+func Write(secrets []Secret, path string) {
+	var filePath string
+	if path == "" {
+		filePath = secretFilePath
+	} else {
+		filePath = path
+	}
+	file, err := os.Create(filePath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
@@ -83,4 +92,19 @@ func ReadFile() []Secret {
 func RenewFolders() {
 	os.RemoveAll(localAppData)
 	CreateFolders()
+}
+
+func Copy(path string) {
+	secrets := ReadFile()
+	path = path + "NLockBox-" + time.Now().Format("2006-01-02") + ".txt"
+	var decrypteSecrects []Secret
+	for _, secret := range secrets {
+		decodedBytes, _ := base64.StdEncoding.DecodeString(secret.Password)
+		decryptedArray, _ := encryption.Decrypt(decodedBytes)
+		decrypted := string(decryptedArray)
+		newSecret := Secret{Username: secret.Username, Password: decrypted}
+		decrypteSecrects = append(decrypteSecrects, newSecret)
+	}
+	Write(decrypteSecrects, path)
+
 }
