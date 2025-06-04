@@ -12,7 +12,8 @@ A lightweight **Go command-line tool** to manage encrypted secrets (like usernam
 ✅ Add encrypted secrets  
 ✅ Edit existing secrets  
 ✅ Delete secrets  
-✅ List all secrets  
+✅ List all secrets 
+✅ Backup secrets  
 ✅ Renew folders (reset secret storage)
 
 ---
