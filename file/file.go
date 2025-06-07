@@ -13,8 +13,8 @@ import (
 )
 
 type Secret struct {
-	Username string
-	Password string
+	Key   string
+	Value string
 }
 
 var secretFilePath string
@@ -61,7 +61,7 @@ func Write(secrets []Secret, path string) {
 	// Use strings.Builder for efficient concatenation
 	var sb strings.Builder
 	for _, secret := range secrets {
-		sb.WriteString(secret.Username + "\t" + secret.Password + "\n")
+		sb.WriteString(secret.Key + "\t" + secret.Value + "\n")
 	}
 
 	// Write to file
@@ -81,7 +81,7 @@ func ReadFile() []Secret {
 	for _, line := range lines {
 		if line != "" {
 			up := strings.Split(line, "	")
-			secrets = append(secrets, Secret{Username: up[0], Password: up[1]})
+			secrets = append(secrets, Secret{Key: up[0], Value: up[1]})
 		}
 	}
 
@@ -99,10 +99,10 @@ func Copy(path string) {
 	path = path + "NLockBox-" + time.Now().Format("2006-01-02") + ".txt"
 	var decrypteSecrects []Secret
 	for _, secret := range secrets {
-		decodedBytes, _ := base64.StdEncoding.DecodeString(secret.Password)
+		decodedBytes, _ := base64.StdEncoding.DecodeString(secret.Value)
 		decryptedArray, _ := encryption.Decrypt(decodedBytes)
 		decrypted := string(decryptedArray)
-		newSecret := Secret{Username: secret.Username, Password: decrypted}
+		newSecret := Secret{Key: secret.Key, Value: decrypted}
 		decrypteSecrects = append(decrypteSecrects, newSecret)
 	}
 	Write(decrypteSecrects, path)
