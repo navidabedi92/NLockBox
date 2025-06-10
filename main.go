@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/navidabedi92/NLockBox.git/encryption"
 	"github.com/navidabedi92/NLockBox.git/file"
 	"github.com/samber/lo"
@@ -18,11 +20,21 @@ func main() {
 		log.Fatal("Incorrect Command. Usage: add|del|list [flags]")
 		os.Exit(1)
 	}
+
+	path, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	dir := filepath.Dir(path)
+	envPath := filepath.Join(dir, ".env")
+	godotenv.Load(envPath) // 👈 load .env file
+
 	file.Init()
 
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	editCmd := flag.NewFlagSet("edit", flag.ExitOnError)
 	delCmd := flag.NewFlagSet("del", flag.ExitOnError)
+	findCmd := flag.NewFlagSet("find", flag.ExitOnError)
 	backupCmd := flag.NewFlagSet("backup", flag.ExitOnError)
 	_ = flag.NewFlagSet("renew", flag.ExitOnError)
 	_ = flag.NewFlagSet("list", flag.ExitOnError)
@@ -33,11 +45,14 @@ func main() {
 	editkey := editCmd.String("key", "", "key of the secret")
 	editvalue := editCmd.String("value", "", "value of the secret")
 
+	findkey := findCmd.String("key", "", "key of the secret")
+
 	delkey := delCmd.String("key", "", "key of the secret")
 
 	backupPath := backupCmd.String("path", "", "key of the secret")
 
 	secrets := file.ReadFile()
+
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
@@ -79,6 +94,18 @@ func main() {
 			return x.Key == *delkey
 		})
 		file.Write(secrets, "")
+	case "find":
+		findCmd.Parse(os.Args[2:])
+		secret, exist := lo.Find(secrets, func(secret file.Secret) bool {
+			return secret.Key == *findkey
+		})
+
+		if exist {
+			decodedBytes, _ := base64.StdEncoding.DecodeString(secret.Value)
+			decryptedArray, _ := encryption.Decrypt(decodedBytes)
+			decrypted := string(decryptedArray)
+			fmt.Print(decrypted)
+		}
 	case "list":
 		secrets := file.ReadFile()
 		for index, secret := range secrets {

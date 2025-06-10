@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/navidabedi92/NLockBox.git/encryption"
 )
 
@@ -22,13 +21,6 @@ var localAppData string
 
 func Init() {
 
-	path, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	dir := filepath.Dir(path)
-	envPath := filepath.Join(dir, ".env")
-	godotenv.Load(envPath) // 👈 load .env file
 	localAppData = filepath.Join(os.Getenv("LOCALAPPDATA"), "NLockBox")
 	secretFilePath = filepath.Join(localAppData, "secrets.txt")
 
