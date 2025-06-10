@@ -41,6 +41,7 @@ func main() {
 	switch os.Args[1] {
 	case "add":
 		addCmd.Parse(os.Args[2:])
+
 		_, exist := lo.Find(secrets, func(secret file.Secret) bool {
 			return secret.Key == *addkey
 		})
@@ -48,6 +49,7 @@ func main() {
 			encrypted, _ := encryption.Encrypt([]byte(*addvalue))
 			encodedvalue := base64.StdEncoding.EncodeToString(encrypted)
 			newSecret := file.Secret{Key: *addkey, Value: encodedvalue}
+
 			secrets = append(secrets, newSecret)
 			file.Write(secrets, "")
 		} else {

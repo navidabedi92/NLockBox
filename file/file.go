@@ -21,12 +21,19 @@ var secretFilePath string
 var localAppData string
 
 func Init() {
-	godotenv.Load() // 👈 load .env file
 
+	path, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	dir := filepath.Dir(path)
+	envPath := filepath.Join(dir, ".env")
+	godotenv.Load(envPath) // 👈 load .env file
 	localAppData = filepath.Join(os.Getenv("LOCALAPPDATA"), "NLockBox")
 	secretFilePath = filepath.Join(localAppData, "secrets.txt")
 
 	CreateFolders()
+
 }
 
 func CreateFolders() string {

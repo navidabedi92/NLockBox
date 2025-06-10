@@ -11,7 +11,6 @@ import (
 
 func Encrypt(plaintext []byte) ([]byte, error) {
 	secret := []byte(os.Getenv("SECRET_KEY"))
-
 	block, err := aes.NewCipher(secret)
 	if err != nil {
 		return nil, err
